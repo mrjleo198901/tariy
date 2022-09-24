@@ -1,0 +1,16 @@
+{
+  "domain": "",
+  "stripe": {
+    "plans": []
+  },
+  "facebook": {
+    "scope": [
+      "email"
+    ],
+    "callback_url": "http://localhost:8080/auth/facebook/callback"
+  },
+  "twitter": {
+    "scope": [],
+    "callback_url": "http://localhost:8080/auth/twitter/callback"
+  }
+}
