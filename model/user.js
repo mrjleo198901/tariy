@@ -9,12 +9,13 @@ const { v4: uuidv4 } = require('uuid');
 * create a new user
 */
 
-exports.create = async function(user, account){
-  
+exports.create = async function (user, account) {
+
   const data = {
 
     id: uuidv4(),
     name: user.name,
+    last_name: user.last_name,
     email: user.email,
     facebook_id: user.facebook_id,
     twitter_id: user.twitter_id,
@@ -23,8 +24,8 @@ exports.create = async function(user, account){
   }
 
   // encrypt password
-  if (user.password){
-  
+  if (user.password) {
+
     const salt = await bcrypt.genSalt(10);
     data.password = await bcrypt.hash(user.password, salt);
 
@@ -32,7 +33,7 @@ exports.create = async function(user, account){
 
   await db('user').insert(data);
 
-  if (data.password){
+  if (data.password) {
 
     delete data.password;
     data.has_password = true;
@@ -51,31 +52,31 @@ exports.create = async function(user, account){
 * OR the default account
 */
 
-exports.get = async function(id, email, account, social, permission){
+exports.get = async function (id, email, account, social, permission) {
 
-  const cols = ['id', 'name', 'email', 'date_created', 'support_enabled', 
-    'last_active', 'onboarded', 'facebook_id', 'twitter_id', 'disabled', 
+  const cols = ['id', 'name', 'email', 'date_created', 'support_enabled',
+    'last_active', 'onboarded', 'facebook_id', 'twitter_id', 'disabled',
     'account_id', 'permission', 'default_account', 'password', '2fa_enabled'];
 
   const data = await db('user')
-  .select(cols)
-  .join('account_users', 'account_users.user_id', 'user.id')
-  .where({
+    .select(cols)
+    .join('account_users', 'account_users.user_id', 'user.id')
+    .where({
 
-    ...id && { id: id },
-    ...email && { email: email },
-    ...permission && { 'account_users.permission': permission }
+      ...id && { id: id },
+      ...email && { email: email },
+      ...permission && { 'account_users.permission': permission }
 
-  })
-  .modify(q => {
+    })
+    .modify(q => {
 
-    social && q.orWhere(`${social.provider}_id`, social.id);
-    account && q.where('account_id', account)
-    !account && (id || email || social) && q.where('account_id', db.raw('default_account'));
+      social && q.orWhere(`${social.provider}_id`, social.id);
+      account && q.where('account_id', account)
+      !account && (id || email || social) && q.where('account_id', db.raw('default_account'));
 
-  });
-  
-  if (data?.length){
+    });
+
+  if (data?.length) {
     data.forEach(u => {
 
       u.has_password = u.password ? true : false;
@@ -93,13 +94,13 @@ exports.get = async function(id, email, account, social, permission){
 * get a list of accounts this user is attached to
 */
 
-exports.account = async function(id){
+exports.account = async function (id) {
 
   return await db('account_users')
-  .select('account_id as id', 'name', 'permission')
-  .join('account', 'account.id', 'account_users.account_id')
-  .where('user_id', id)
-  .orderBy('account.date_created', 'asc');
+    .select('account_id as id', 'name', 'permission')
+    .join('account', 'account.id', 'account_users.account_id')
+    .where('user_id', id)
+    .orderBy('account.date_created', 'asc');
 
 }
 
@@ -108,10 +109,10 @@ exports.account = async function(id){
 * assign a user to an account
 */
 
-exports.account.add = async function(id, account, permission){
+exports.account.add = async function (id, account, permission) {
 
   return await db('account_users')
-  .insert({ user_id: id, account_id: account, permission: permission });
+    .insert({ user_id: id, account_id: account, permission: permission });
 
 }
 
@@ -120,10 +121,10 @@ exports.account.add = async function(id, account, permission){
 * unassign a user from an account
 */
 
-exports.account.delete = async function(id, account){
+exports.account.delete = async function (id, account) {
 
   return await db('account_users').del()
-  .where({ user_id: id, account_id: account });
+    .where({ user_id: id, account_id: account });
 
 }
 
@@ -132,12 +133,12 @@ exports.account.delete = async function(id, account){
 * return the user password hash
 */
 
-exports.password = async function(id, account){
+exports.password = async function (id, account) {
 
   const data = await db('user').select('password')
-  .join('account_users', 'account_users.user_id', 'user.id')
-  .where({ id: id, 'account_users.account_id': account });
-  
+    .join('account_users', 'account_users.user_id', 'user.id')
+    .where({ id: id, 'account_users.account_id': account });
+
   return data.length ? data[0] : null;
 
 }
@@ -147,14 +148,14 @@ exports.password = async function(id, account){
 * check the password against the hash stored in the database
 */
 
-exports.password.verify = async function(id, account, password){
+exports.password.verify = async function (id, account, password) {
 
   const data = await db('user')
-  .select('name', 'email', 'password')
-  .where({ id: id, 'account_users.account_id': account })
-  .join('account_users', 'account_users.user_id', 'user.id');
-  
-  const verified = data[0]?.password ? 
+    .select('name', 'email', 'password')
+    .where({ id: id, 'account_users.account_id': account })
+    .join('account_users', 'account_users.user_id', 'user.id');
+
+  const verified = data[0]?.password ?
     await bcrypt.compare(password, data[0].password) : false;
 
   delete data[0].password;
@@ -167,7 +168,7 @@ exports.password.verify = async function(id, account, password){
 * save a new password for the user
 */
 
-exports.password.save = async function(id, password){
+exports.password.save = async function (id, password) {
 
   // encrypt the password
   const salt = await bcrypt.genSalt(10);
@@ -185,18 +186,18 @@ exports.password.save = async function(id, password){
 
 exports['2fa'] = {}
 
-exports['2fa'].secret = async function(id, email){
+exports['2fa'].secret = async function (id, email) {
 
   const data = await db('user').select('2fa_secret')
-  .modify(q => {
+    .modify(q => {
 
-    id && q.where('id', id);
-    email && q.where('email', email);
+      id && q.where('id', id);
+      email && q.where('email', email);
 
-  });
+    });
 
   return data.length ? crypto.decrypt(data[0]['2fa_secret']) : null;
- 
+
 }
 
 exports['2fa'].backup = {};
@@ -206,7 +207,7 @@ exports['2fa'].backup = {};
 * hash and save the users backup code
 */
 
-exports['2fa'].backup.save = async function(id, code){
+exports['2fa'].backup.save = async function (id, code) {
 
   // encrypt the password
   const salt = await bcrypt.genSalt(10);
@@ -222,15 +223,15 @@ exports['2fa'].backup.save = async function(id, code){
 * verify the users 2fa backup code
 */
 
-exports['2fa'].backup.verify = async function(id, email, account, code){
+exports['2fa'].backup.verify = async function (id, email, account, code) {
 
   const data = await db('user').select('2fa_backup_code')
-  .modify(q => {
+    .modify(q => {
 
-    id && q.where({ id: id, 'account.id': account });
-    email && q.where('email', email);
-     
-  });
+      id && q.where({ id: id, 'account.id': account });
+      email && q.where('email', email);
+
+    });
 
   return data?.[0]?.['2fa_backup_code'] ? await bcrypt.compare(code, data[0]['2fa_backup_code']) : false;
 
@@ -241,11 +242,11 @@ exports['2fa'].backup.verify = async function(id, email, account, code){
 * return the user's 2fa secret
 */
 
-exports.secret = async function(email){
+exports.secret = async function (email) {
 
   const data = await db('user').select('2fa_secret').where({ email: email });
   return data.length ? crypto.decrypt(data[0]['2fa_secret']) : null;
- 
+
 }
 
 /*
@@ -254,12 +255,12 @@ exports.secret = async function(email){
 * profile: object containing the user data to be saved
 */
 
-exports.update = async function(id, account, data){
+exports.update = async function (id, account, data) {
 
-  const user = {...data }
+  const user = { ...data }
 
   // update cols in account_users
-  if (user.permission || user.onboarded){
+  if (user.permission || user.onboarded) {
 
     await db('account_users').update({
 
@@ -274,16 +275,16 @@ exports.update = async function(id, account, data){
   }
 
   // update cols in user table?
-  if (Object.keys(user).length){
+  if (Object.keys(user).length) {
 
     await db('user').update(user)
-    .where('id', function(){
-  
-      this.select('user_id')
-      .from('account_users')
-      .where({ account_id : account, user_id: id })
-  
-    });
+      .where('id', function () {
+
+        this.select('user_id')
+          .from('account_users')
+          .where({ account_id: account, user_id: id })
+
+      });
   }
 
   return data;
@@ -295,14 +296,14 @@ exports.update = async function(id, account, data){
 * delete a single user
 */
 
-exports.delete = async function(id, account){
+exports.delete = async function (id, account) {
 
   return await db('user').del()
-  .where('id', function(){
+    .where('id', function () {
 
-    this.select('user_id')
-    .from('account_users')
-    .where({ account_id : account, user_id: id })
+      this.select('user_id')
+        .from('account_users')
+        .where({ account_id: account, user_id: id })
 
-  });
+    });
 };

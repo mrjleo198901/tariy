@@ -14,6 +14,16 @@ const limiter = require('express-rate-limit');
 const port = process.env.PORT || 8080;
 const app = express();
 
+
+process.on('uncaughtException', function (err) {
+  console.error(err);
+  console.log("Algo hizo bang...");
+});
+
+app.get("/", (req, res) => {
+  res.send('<p>Riobytes Soluctions®. Todos los derechos reservados 2023</p>');
+});
+
 // helmet
 app.use(
   helmet({

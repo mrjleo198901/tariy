@@ -10,11 +10,12 @@ module.exports = {
       password: process.env.DB_PASSWORD,
       port: Number(process.env.DB_PORT),
       database: process.env.DB_NAME,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: false },
+      propagateCreateError: false
     },
     pool: {
       min: 2,
-      max: 9
+      max: 29
     }
   },
   production: {
@@ -25,11 +26,12 @@ module.exports = {
       password: process.env.DB_PASSWORD,
       port: Number(process.env.DB_PORT),
       database: process.env.DB_NAME,
-      ssl: { rejectUnauthorized: true }
+      ssl: { rejectUnauthorized: true },
+      propagateCreateError: false
     },
     pool: {
       min: 2,
-      max: 9
+      max: 29
     }
   },
 };
